@@ -1,0 +1,55 @@
+{
+    "mediaType": "application/vnd.dev.sigstore.trustedroot+json;version=0.1",
+    "tlogs": [
+        {
+            "baseUrl": "http://sigstore-rekor:3000",
+            "hashAlgorithm": "SHA2_256",
+            "publicKey": {
+                "rawBytes": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAElLVrK9K1NVfMUTM1C79+d0U3Jq1CJ6My6pTQbtSMRnSUowKu4OnJ57NaHxhShATk9k2fRGtd6I2Hwf4il+Kd9w==",
+                "keyDetails": "PKIX_ECDSA_P256_SHA_256",
+                "validFor": {
+                    "start": "2021-01-12T11:53:27.000Z"
+                }
+            },
+            "logId": {
+                "keyId": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0="
+            }
+        }
+    ],
+    "certificateAuthorities": [
+        {
+            "subject": {
+                "organization": "Organization",
+                "commonName": "fulcio-root"
+            },
+            "uri": "http://sigstore-fulcio:5000",
+            "certChain": {
+                "certificates": [
+                    {
+                        "rawBytes": "MIICLzCCAdWgAwIBAgIUQPbsBzT2s/wYbPz5kCBiGY08EXowCgYIKoZIzj0EAwIwZTELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAklOMQ0wCwYDVQQHDARDaXR5MRUwEwYDVQQKDAxPcmdhbml6YXRpb24xDTALBgNVBAsMBFVuaXQxFDASBgNVBAMMC2Z1bGNpby1yb290MB4XDTI1MDQwMTIyNTEzNVoXDTI2MDQwMTIyNTEzNVowZTELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAklOMQ0wCwYDVQQHDARDaXR5MRUwEwYDVQQKDAxPcmdhbml6YXRpb24xDTALBgNVBAsMBFVuaXQxFDASBgNVBAMMC2Z1bGNpby1yb290MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAESePVwhAFmBA8W0YA2/cjK0bvI6B+LbCqoSDncFYqjXtZQUPPvqpFDvjMQGlARR0LU93mGkUuO+jxIjKZn79wyaNjMGEwHQYDVR0OBBYEFPRTxp2LmFAt9cDXAQxt0SjGzwHYMB8GA1UdIwQYMBaAFPRTxp2LmFAt9cDXAQxt0SjGzwHYMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgEGMAoGCCqGSM49BAMCA0gAMEUCIQCi80uX7p1tMvSoeeKAJaGklTu06lGC2V7idvBOHA+OGwIgI/wpz7U5n1r8gq7UTNQpScNsUqK3M1ctEcSgQqLgoAs="
+                    }
+                ]
+            },
+            "validFor": {
+                "start": "2025-04-01T22:51:35+00:00",
+                "end": "2026-04-01T22:51:35+00:00"
+            }
+        }
+    ],
+    "ctlogs": [
+        {
+            "baseUrl": "",
+            "hashAlgorithm": "SHA2_256",
+            "publicKey": {
+                "rawBytes": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEtlYocjWipW6gVcPJM2iW9YPZtlbEIk3KKYtCFwIoayTBMaEmv0xsmAyQFk7QkpLdkRpxBuhn9+K5XPPklcB8PA==",
+                "keyDetails": "PKIX_ECDSA_P256_SHA_256",
+                "validFor": {
+                    "start": "2021-03-14T00:00:00.000Z"
+                }
+            },
+            "logId": {
+                "keyId": "CGCS8ChS/2hF0dFrJ4ScRWcYrBY9wzjSbea8IgY2b3I="
+            }
+        }
+    ]
+}

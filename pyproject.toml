@@ -1,0 +1,14 @@
+[project]
+name = "diverify"
+version = "0.0.1"
+authors = [
+    {name = "Chinenye Okafor", email = "okafor1@purdue.edu"},
+]
+description = "DiVerse identity verification system"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "License :: Apache",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3"
+]

@@ -1,0 +1,6 @@
+{
+  "identity": "https://github.com/sigstore-conformance/extremely-dangerous-public-oidc-beacon/.github/workflows/extremely-dangerous-oidc-beacon.yml@refs/heads/main",
+  "provider": "https://token.actions.githubusercontent.com",
+  "signer_measurement": "87f95cc0b2c0bc2490341f40ff71f550823f30fbccf9d4507cc05f159ec3edf8",
+  "rule": "(identity AND provider) AND signer_measurement"
+}

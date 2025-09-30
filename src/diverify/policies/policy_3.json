@@ -1,0 +1,11 @@
+{
+  "identity": "https://github.com/sigstore-conformance/extremely-dangerous-public-oidc-beacon/.github/workflows/extremely-dangerous-oidc-beacon.yml@refs/heads/main",
+  "provider": "https://token.actions.githubusercontent.com",
+  "device_fingerprint": "443d32cb2f8d7ae1900535e1563a02446c59fdb34075291d6c306da3ff9e5f4f",
+  "security_key": {
+    "slot9a_public_key": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnSAkK4R1kirwTTrjd+yX\njqmjJsvDX9stZS/UN1NuL8d4567Nhe6pu0padWHgvdnhmgfnXrA7XNrMiLSKEHwQ\n7d+w6WsDUxUXedAr2xoue4AZGcwM1uQpi5PbfFBBMOM6TAI5Ke2aFLawAj59ohzz\nP6dTHnsx0yR2fm6qHaTOVkmlkysBtO0IUlgyNCDz2h0qGezUBxLRkOp3VdI3bLDu\n7jaGAzTctSTLdJNQMFtoM3kQwvXV+w9AAHrjF/3cdThFi3NgJapT17+uVOm3RoT/\nP8WRyqcOopMpeGclpunVYm0Mpu53U6a2sM2MlKSO0RQJwbQC0VmPYOMWs4rHjTYu\nHwIDAQAB\n-----END PUBLIC KEY-----",
+    "slotf9_attestation_cert": "-----BEGIN CERTIFICATE-----\nMIIC+jCCAeKgAwIBAgIJAJF9cmxN2+oAMA0GCSqGSIb3DQEBCwUAMCsxKTAnBgNV\nBAMMIFl1YmljbyBQSVYgUm9vdCBDQSBTZXJpYWwgMjYzNzUxMCAXDTE2MDMxNDAw\nMDAwMFoYDzIwNTIwNDE3MDAwMDAwWjAhMR8wHQYDVQQDDBZZdWJpY28gUElWIEF0\ndGVzdGF0aW9uMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAr4GVnOpu\nnNI/CYsL/DwNkT2N7gLp3Bd/thHWSWNVcZ6UuvgFnwO8WtAZ6kPwayII09rJnAgi\nED9qeW/WxRQymn+P624jLkfVKmBbGNjX81q9/6bUGZIm6iQPQPp17BSicY0tQpM2\nz2kV98e3XFNkACI5QiE9vbXdsPq3PhDmgD9ZYRpcbM8G/WLZ1DO0jsGhHhfJxepY\ntOfUsPzUQ/E9aDmZ21+/TSZm+OuLOs4sZIVBBy3hHdEhB+DLMbJ4eq9jYv1WeyAK\nfYYolkeWbUt0zHQmx3MOUdX1pJdqh7K/1oQKBTwR5s77mprbzWBfKgxoJDl+1kN0\nsA2S1hXDQn/4WQIDAQABoykwJzARBgorBgEEAYLECgMDBAMFAgcwEgYDVR0TAQH/\nBAgwBgEB/wIBADANBgkqhkiG9w0BAQsFAAOCAQEASNb5w/pmYp/Qeq7qjSY3UdUi\nfVR6kXtmaMOZ2HRmZr/wQa+PWHnQWwnL8tRJeomEb0zC5qQvOpEqJvdiTO+TWukC\nALAlXnSM2Dn7+fJl45AKtD7l0aXYSnlGF1rYi3lSdmPG8Ptxoc+WChCaNB1X7pM/\nlnP3uWncij1dr/G48cDLC8OPeBsojFzqBX9E1HfiBnjwOokvR8/sUSFOVB+NyDhv\nt42i2Iz/2BB3KeD/8w/C+PmEqse2kC/D6coLs1n8eqQJUwasuPd6SN37WOmf/AoI\n+i2DR7MtBGuQ+AiiL5OBvkCZpvm54MpA4jrFfj31Q6Yv8rXbWUrEfBNbWBWpJA==\n-----END CERTIFICATE-----"
+  },
+  "signer_measurement": "87f95cc0b2c0bc2490341f40ff71f550823f30fbccf9d4507cc05f159ec3edf8",
+  "rule": "identity AND provider AND device_fingerprint AND security_key AND signer_measurement"
+}
