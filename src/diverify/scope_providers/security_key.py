@@ -1,5 +1,4 @@
-import subprocess, json, requests, tempfile
-from pathlib import Path
+import subprocess
 from diverify.scope_providers.base_verifier import ScopeProvider
 
 class SecurityKeyScopeProvider(ScopeProvider):

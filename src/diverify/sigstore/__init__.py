@@ -1,25 +1,11 @@
-"""
-DiVerify Sigstore Integration
+from diverify.util.config import Config
 
-This module provides enhanced Sigstore integration with DiVerify attestation capabilities.
-"""
-
-from .signer import SigstoredSigner
-from .key import SigstoredKey
-
-# Configuration constants
-import configparser
-
-config = configparser.ConfigParser()
-config.read('stack_config.ini')
-
-DEFAULT_FULCIO_URL = config['settings']['fulcio-url']
-DEFAULT_REKOR_URL = config['settings']['rekor-url']
-DEFAULT_OAUTH_ISSUER_URL = config['settings']['oauth_issuer-url']
+config = Config('config/stack_config.conf')
+DEFAULT_FULCIO_URL = config.get_fulcio_service_url()
+DEFAULT_REKOR_URL = config.get_rekor_service_url()
+DEFAULT_OAUTH_ISSUER_URL = config.get_oauth_issuer_url()
 
 __all__ = [
-    "SigstoredSigner", 
-    "SigstoredKey", 
     "DEFAULT_REKOR_URL", 
     "DEFAULT_FULCIO_URL", 
     "DEFAULT_OAUTH_ISSUER_URL"

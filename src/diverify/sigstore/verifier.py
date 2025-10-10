@@ -17,6 +17,7 @@ from securesystemslib.exceptions import VerificationError, UnverifiedSignatureEr
 from diverify.util import perf_utils
 from diverify.daemon.quote import verify_quote, validate_user_data
 from diverify.sigstore import DEFAULT_REKOR_URL
+from diverify.util.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +39,9 @@ def verify_signature(signature: Signature, data: bytes, identity: str, issuer: s
         raise VerificationError(IMPORT_ERROR) from e
 
     try:
-        from securesystemslib.signer import Signature
-        path = Path(os.path.join(os.path.dirname(__file__), "trusted_root.json"))
-        verifier = Verifier(rekor=RekorClient(DEFAULT_REKOR_URL), trusted_root=TrustedRoot(_TrustedRoot().from_json(path.read_bytes())))
+        config = Config('config/stack_config.conf')
+        Sigstore_Trusted_Root_Path = config.get_sigstore_trusted_root_path()
+        verifier = Verifier(rekor=RekorClient(DEFAULT_REKOR_URL), trusted_root=TrustedRoot(_TrustedRoot().from_json(Sigstore_Trusted_Root_Path.read_bytes())))
 
         bundle_data = signature.unrecognized_fields["bundle"]
         bundle = Bundle.from_json(json.dumps(bundle_data))

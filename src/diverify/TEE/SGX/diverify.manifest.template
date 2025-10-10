@@ -1,0 +1,75 @@
+# Python3 manifest example
+
+loader.entrypoint.uri = "file:{{ gramine.libos }}"
+libos.entrypoint = "{{ entrypoint }}"
+
+loader.log_level = "{{ log_level }}"
+
+loader.env.LD_LIBRARY_PATH = "/usr/bin:/lib:/lib:{{ arch_libdir }}:/usr/{{ arch_libdir }}:/venv/lib"
+
+loader.env.RA_TYPE = "dcap"
+loader.env.PYTHONPATH = "/venv/lib/python3.12/site-packages:/home/diverify"
+
+loader.insecure__use_cmdline_argv = false
+
+loader.env.PERF_MODE = "false"
+
+loader.argv = ["/venv/bin/python", "/home/diverify/src/diverify/daemon/div_daemon.py"]
+sys.enable_sigterm_injection = true
+
+fs.mounts = [
+  { path = "/lib", uri = "file:{{ gramine.runtimedir() }}" },
+  { path = "/usr/bin", uri = "file:/usr/bin" },
+  { path = "{{ arch_libdir }}", uri = "file:{{ arch_libdir }}" },
+  { path = "/usr/{{ arch_libdir }}", uri = "file:/usr/{{ arch_libdir }}" },
+  # Mount the virtual env
+  { path = "/venv", uri = "file:./.venv" },
+  { path = "/venv/bin/python", uri = "file:./.venv/bin/python" },
+  # System Python paths
+  {% for path in python.get_sys_path(entrypoint) %}
+    { path = "{{ path }}", uri = "file:{{ path }}" },
+  {% endfor %}
+  { path = "{{ entrypoint }}", uri = "file:{{ entrypoint }}" },
+  { type = "tmpfs", path = "/tmp" , uri = "file:/tmp"},
+  { type = "encrypted", path = "/data/", uri = "file:enclave_data/", key_name = "_sgx_mrenclave" },
+  { path = "/home/diverify", uri = "file:/home/diverify" },
+  { path = "/home/SGXDataCenterAttestationPrimitives", uri = "file:/home/SGXDataCenterAttestationPrimitives" },
+  { path = "/usr/bin/yubico-piv-tool", uri = "file:/usr/bin/yubico-piv-tool" },
+  { path = "/.dockerenv", uri = "file:/.dockerenv" },
+  { path = "/.dockerenv", uri = "file:/.dockerenv" },
+  { path = "/tmp", uri = "file:/tmp"},
+]
+
+sys.stack.size = "2M"
+sys.enable_extra_runtime_domain_names_conf = true
+
+sgx.debug = true
+sgx.edmm_enable = {{ 'true' if env.get('EDMM', '0') == '1' else 'false' }}
+sgx.enclave_size = "2048M"
+sgx.max_threads = 32
+sgx.remote_attestation = "dcap"
+
+sgx.trusted_files = [
+  "file:{{ gramine.libos }}",
+  "file:{{ entrypoint }}",
+  "file:{{ gramine.runtimedir() }}/",
+  "file:{{ arch_libdir }}/",
+  "file:/usr/{{ arch_libdir }}/",
+  {% for path in python.get_sys_path(entrypoint) %}
+    "file:{{ path }}{{ '/' if path.is_dir() else '' }}",
+  {% endfor %}
+  "file:/home/diverify/src/diverify/daemon/",
+  "file:/home/diverify/src/diverify/scope_providers/",
+  "file:/home/diverify/config/",
+]
+
+sgx.allowed_files = [
+  "file:/tmp/",
+  "file:perf_log.csv",
+  "file:./.venv/",
+  "file:./.venv/bin/python",
+  "file:/home/SGXDataCenterAttestationPrimitives/",
+  "file:/usr/bin/yubico-piv-tool",
+  "file:/.dockerenv",
+  "file:/home/diverify/",
+]

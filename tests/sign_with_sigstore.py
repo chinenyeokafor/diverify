@@ -4,11 +4,11 @@ import base64
 import hashlib
 import logging
 import requests
-import configparser
+from diverify.util.config import Config
 from securesystemslib.signer import SIGNER_FOR_URI_SCHEME, Signer
-from diverify.sigstore import SigstoredSigner 
-from diverify.rekor import submit_to_tlog
-from diverify.verifier import verify_signature, verify_quote_and_signature
+from diverify.sigstore.signer import SigstoredSigner 
+from diverify.sigstore.rekor import submit_to_tlog
+from diverify.sigstore.verifier import verify_signature, verify_quote_and_signature
 from cryptography.x509 import load_pem_x509_certificate
 from diverify.util import perf_utils
 from diverify.scope_providers.scope_provider_loader import load_scope_provider
@@ -16,9 +16,9 @@ from diverify.scope_providers.scope_provider_loader import load_scope_provider
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-config = configparser.ConfigParser()
-config.read('stack_config.ini')
-DiVerify_Daemon_URL = config['settings']['diverify-url']
+config = Config('config/stack_config.conf')
+DiVerify_Daemon_URL = config.get_diverify_url()
+
 
 
 TEST_IDENTITY = (
@@ -52,12 +52,13 @@ def verify_scope(auth):
     return load_scope_provider(auth).verify()
 
 def run_mode_a(policy=None):
-    SIGNER_FOR_URI_SCHEME[SigstoredSigner.SCHEME] = SigstoredSigner
-
-    uri, public_key=SigstoredSigner.import_(TEST_IDENTITY, TEST_ISSUER, ambient=True)
-    
     with open("config.json", 'r') as file:
         config = json.load(file)
+    import uuid
+    nonce = str(uuid.uuid4())
+
+    SIGNER_FOR_URI_SCHEME[SigstoredSigner.SCHEME] = SigstoredSigner
+    uri, public_key=SigstoredSigner.import_(TEST_IDENTITY, TEST_ISSUER, ambient=True, nonce=nonce)
     required_auth = config["levels"].get(str(LEVEL), {}).get("identity", {})
     signer, token =Signer.from_priv_key_uri(uri, public_key)
 

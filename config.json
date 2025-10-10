@@ -1,0 +1,27 @@
+{
+
+    "version": "1.0",
+    "levels": {
+      "1": {
+        "identity": {
+          "oidc": true
+        }
+      },
+      "2": {
+        "identity": {
+          "oidc": true,
+          "device_fingerprint": true,
+          "source_local_scope": true
+        }
+      },
+      "3": {
+        "identity": {
+          "oidc": true,
+          "device_fingerprint": true,
+          "security_key": true,
+          "attestation": true
+        }
+      }
+    }
+  }
+  

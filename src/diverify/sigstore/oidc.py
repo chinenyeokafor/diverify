@@ -7,7 +7,6 @@ Handles OAuth2/OIDC flows and token management for DiVerify.
 import base64
 import hashlib
 import http.server
-import json
 import os
 import socketserver
 import uuid
@@ -15,16 +14,9 @@ import webbrowser
 from threading import Event, Thread
 from typing import Tuple
 from urllib import parse
-
 import jwt
 import requests
-import configparser
-
-# Load configuration
-config = configparser.ConfigParser()
-config.read('stack_config.ini')
-
-DEFAULT_OAUTH_ISSUER_URL = config['settings']['oauth_issuer-url']
+from diverify.sigstore import DEFAULT_OAUTH_ISSUER_URL
 
 
 class OIDCAuthenticator:
@@ -33,7 +25,7 @@ class OIDCAuthenticator:
     def __init__(self, oauth_issuer_url: str = DEFAULT_OAUTH_ISSUER_URL):
         self.oauth_issuer_url = oauth_issuer_url
     
-    def get_identity_token(self, limit_scope: bool = False) -> Tuple[str, dict]:
+    def get_identity_token(self, nonce, limit_scope: bool = False) -> Tuple[str, dict]:
         """Retrieve an identity token using OAuth2 with Dex.
         
         Args:
@@ -46,7 +38,7 @@ class OIDCAuthenticator:
         client_secret = ""
 
         auth_code, redirect_uri, code_verifier = self._get_authorization_code(
-            client_id, client_secret, limit_scope=limit_scope
+            nonce, client_id, client_secret, limit_scope=limit_scope
         )
 
         response = requests.post(
@@ -71,7 +63,7 @@ class OIDCAuthenticator:
         decoded_token = jwt.decode(raw_token, options={"verify_signature": False})
         return raw_token, decoded_token
 
-    def _get_authorization_code(self, client_id: str, client_secret: str, limit_scope: bool = False) -> Tuple[str, str, str]:
+    def _get_authorization_code(self, nonce, client_id: str, client_secret: str, limit_scope: bool = False) -> Tuple[str, str, str]:
         """Start OAuth2 flow and capture authorization code.
         
         Returns:
@@ -104,7 +96,7 @@ class OIDCAuthenticator:
         
         # Generate PKCE parameters
         code_verifier, code_challenge = self._generate_pkce_challenge()
-        state, nonce = str(uuid.uuid4()), str(uuid.uuid4())
+        state = str(uuid.uuid4())
 
         scope = "openid+email"
         # TODO: Add repo scope when Dex supports it

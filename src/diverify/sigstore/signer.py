@@ -69,7 +69,8 @@ class SigstoredSigner(Signer):
         # Get identity token
         if not ambient:
             oidc_client = OIDCAuthenticator()
-            token, decoded_token = oidc_client.get_identity_token(limit_scope=bool(secrets_handler))
+            nonce = params.get("nonce", "")
+            token, decoded_token = oidc_client.get_identity_token(nonce,limit_scope=bool(secrets_handler))
         else:
             credential = detect_credential()
             if not credential:
@@ -109,13 +110,13 @@ class SigstoredSigner(Signer):
             )
 
     @classmethod
-    def _get_uri(cls, ambient: bool) -> str:
+    def _get_uri(cls, ambient: bool, nonce: str) -> str:
         """Generate private key URI for this signer."""
-        return f"{cls.SCHEME}:{'' if ambient else '?ambient=false'}"
+        return f"{cls.SCHEME}:?{'ambient=false&' if not ambient else ''}nonce={nonce}"
 
     @classmethod
     def import_(
-        cls, identity: str, issuer: str, ambient: bool = True
+        cls, identity: str, issuer: str, nonce: str, ambient: bool = True
     ) -> Tuple[str, SigstoredKey]:
         """Create public key and signer URI.
 
@@ -132,7 +133,7 @@ class SigstoredSigner(Signer):
             Tuple of (private_key_uri, public_key)
         """
         keyid, key = SigstoredKey.create_key(identity, issuer)
-        uri = cls._get_uri(ambient)
+        uri = cls._get_uri(ambient, nonce)
         return uri, key 
 
     def sign(self, payload: bytes, diverify_proof: Dict) -> Dict[str, Any]:

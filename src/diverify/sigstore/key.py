@@ -38,6 +38,7 @@ class SigstoredKey(Key):
 
     def verify_signature(self, signature: Signature, data: bytes) -> None:
         """Signature verification is handled by the DiVerify verifier module."""
+        print("Signature verification is handled by the DiVerify verifier module.")
         pass
 
     @classmethod

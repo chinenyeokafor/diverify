@@ -70,7 +70,7 @@ We use `securesystemslib` for the client and verifier.
 To generate the local Sigstore infra root of trust, run:
 
 ```bash
-python securesystemslib/diverify/util/generate_trusted_root.py
+python /diverify/util/generate_trusted_root.py
 ```
 
 ---
@@ -98,4 +98,4 @@ This runs tests across **three modes** and **three levels**.
 
 ### Error: Failed to download target policy*.json
 **Cause**: Policy not found or TUF policies expired.  
-**Fix**: Need to resign and retry.
+**Fix**: Need to re-sign and retry.

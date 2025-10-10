@@ -1,0 +1,8 @@
+cryptography==46.0.2
+diverify==0.0.1
+fastapi==0.118.0
+pip==24.0
+PyJWT==2.10.1
+requests==2.32.5
+tomli==2.2.1
+uvicorn==0.37.0

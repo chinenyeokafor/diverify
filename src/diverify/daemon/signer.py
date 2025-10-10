@@ -3,8 +3,7 @@ import json
 import base64
 import hashlib
 import logging
-import requests 
-import configparser
+import requests
 from dataclasses import dataclass
 from typing import Tuple, Any, Dict
 from cryptography.hazmat.primitives import hashes, serialization
@@ -16,19 +15,15 @@ from cryptography.x509 import (
 from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
 from diverify.daemon.quote import get_quote, get_user_data
 from diverify.util import perf_utils
+from diverify.util.config import Config
 
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-config = configparser.ConfigParser()
 # provide enclave the absolute path
-try: 
-    config.read('stack_config.ini')
-    DEFAULT_FULCIO_URL = config['settings']['fulcio-url']
-except KeyError:
-    config.read('/home/securesystemslib/stack_config.ini')
-    DEFAULT_FULCIO_URL = config['settings']['fulcio-url']
+config = Config('/home/diverify/config/stack_config.conf')
+DEFAULT_FULCIO_URL = config.get_fulcio_service_url()
 
 SIGNING_CERT_ENDPOINT = "/api/v2/signingCert"
 TRUST_BUNDLE_ENDPOINT = "/api/v2/trustBundle"
@@ -69,7 +64,7 @@ def sign(payload: bytes, token, diverify_proof: Dict, trust_level, mode=None) ->
         quote = set_and_get_quote(dvp_sig)
         return quote
 
-    # We assume identity token is valid and send CSR to Fulcio
+    
     if mode == "c":
         # Add signing key to diverify proof
         diverify_proof["public_key"] = private_key.public_key().public_bytes(
@@ -88,6 +83,7 @@ def sign(payload: bytes, token, diverify_proof: Dict, trust_level, mode=None) ->
         "diverify_proof": diverify_proof
         }
     else:
+        # We assume identity token is valid and send CSR to Fulcio
         quote = get_remote_attestation(diverify_proof)
         diverify_proof["quote"] = base64.b64encode(quote).decode()
         csr = create_csr(email_address, json.dumps(diverify_proof).encode()).sign(private_key, hashes.SHA256())

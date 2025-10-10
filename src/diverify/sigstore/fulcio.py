@@ -11,7 +11,6 @@ from typing import Dict, List
 from urllib import parse
 
 import requests
-import configparser
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.x509 import (
     BasicConstraints, CertificateSigningRequestBuilder, Name, NameAttribute,
@@ -20,12 +19,8 @@ from cryptography.x509 import (
 from cryptography.x509.oid import NameOID
 
 from diverify.util import perf_utils
+from diverify.sigstore import DEFAULT_FULCIO_URL
 
-# Load configuration
-config = configparser.ConfigParser()
-config.read('stack_config.ini')
-
-DEFAULT_FULCIO_URL = config['settings']['fulcio-url']
 SIGNING_CERT_ENDPOINT = "/api/v2/signingCert"
 
 
@@ -99,7 +94,11 @@ class FulcioClient:
         
         resp = requests.post(fulcio_url, certificate_request, headers=headers)
         if not resp.ok:
-            raise Exception(resp.json().get("message", "Fulcio request failed"))
+            try:
+                msg = resp.json().get("message", resp.text)
+            except ValueError:
+                msg = resp.text
+            raise Exception(f"Fulcio request failed: {msg}")
         
         response_data = resp.json()
         certs = response_data.get("signedCertificateEmbeddedSct", {}).get("chain", {}).get("certificates", [])

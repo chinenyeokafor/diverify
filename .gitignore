@@ -1,0 +1,30 @@
+# root-level directories
+dist/*
+build/*
+env/*
+
+# global file patterns
+*.log
+*.pyc
+*.session
+*.swo
+*.swp
+*.egg-info
+.coverage
+.tox/*
+tests/htmlcov/*
+.DS_Store
+.python-version
+
+# Sphinx documentation
+docs/_build/
+
+.env
+.venv
+credentials.json
+ctfe_public.pem
+csr.pem
+tuf-metadata/*
+diverify.manifest
+diverify.manifest.sgx
+diverify.sig

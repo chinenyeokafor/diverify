@@ -5,16 +5,13 @@ from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, ec
 import base64
-import configparser
+from diverify.util.config import Config
 
+from diverify.sigstore import DEFAULT_FULCIO_URL, DEFAULT_REKOR_URL, DEFAULT_OAUTH_ISSUER_URL
 
-config = configparser.ConfigParser()
-config.read('stack_config.ini')
-
-DEFAULT_FULCIO_URL = config['settings']['fulcio-url']
-DEFAULT_REKOR_URL = config['settings']['rekor-url']
-DEFAULT_OAUTH_ISSUER_URL = config['settings']['oauth_issuer-url']
 CTFE_PUBKEY_PATH = "ctfe_public.pem" 
+config = Config('config/stack_config.conf')
+trusted_root_file = config.get_sigstore_trusted_root()
 
 def get_tlog_public_key():
     response = requests.get(DEFAULT_REKOR_URL + "/api/v1/log/publicKey")
@@ -259,11 +256,11 @@ def generate_trusted_root():
     }
     return trusted_root
 
-def save_trusted_root(filename="diverify/trusted_root.json"):
+def save_trusted_root(trusted_root_file):
     data = generate_trusted_root()
-    with open(filename, "w") as f:
+    with open(trusted_root_file, "w") as f:
         json.dump(data, f, indent=4)
-    print(f"Trusted root configuration saved to {filename}")
+    print(f"Trusted root configuration saved to {trusted_root_file}")
 
 def save_clienttrustconfig(filename="config.v1_mine.json.json"):
     data = generate_trusted_root()
@@ -272,4 +269,4 @@ def save_clienttrustconfig(filename="config.v1_mine.json.json"):
     print(f"Client Trust configuration saved to {filename}")
 
 if __name__ == "__main__":
-    save_trusted_root()
+    save_trusted_root(trusted_root_file)
