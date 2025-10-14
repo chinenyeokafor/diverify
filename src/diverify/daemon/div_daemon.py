@@ -3,16 +3,21 @@ import uvicorn
 from typing import Dict
 import uuid
 from diverify.daemon.scopes import get_scopes
-from diverify.daemon.signer import sign
+from diverify.daemon.sigstore_signer import DiVerifyDaemonSigner
+from diverify.openpubkey.opk_scopes import OPKScopeService
 import base64
 import json
+import os
 import logging
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format="%(levelname)s - %(message)s")
 
 # using the absolute path so enclave can find it
-TRUST_CONFIG_FILE = "/home/diverify/config/trust_config.json"
+if os.path.exists("/dev/sgx_enclave"):
+    TRUST_CONFIG_FILE = "/home/diverify/config/trust_config.json"
+else:
+    TRUST_CONFIG_FILE = "config/trust_config.json"
 
 
 app = FastAPI()
@@ -37,20 +42,39 @@ def sign_artifact(params: Dict):
         trust_level = params["level"]
         payload = params["payload"]
         mode = params["mode"]
+        use_openpubkey = params.get("use_openpubkey", False)
     except KeyError as e:
         raise HTTPException(status_code=400, detail=f"Missing parameter: {str(e)}")
-        
-    # Step 1: Collect user scopes
+
     req_scopes = get_auth_requirements(trust_level)["auth_requirements"]
-    scopes, token = get_scopes(req_scopes)
-    # Step 2: Generate diverify proof
-    diverify_proof = {"level": trust_level, "identity": scopes}
-    # Step 3: Request signing certificate if mode is "c"
-    if "attestation" in req_scopes or mode == "b" or mode == "c":
+    if use_openpubkey:
+        print("Using OpenPubKey flow for signing artifact")
+        # Step 1: Collect user scopes
+        opk_service = OPKScopeService()
+        scopes = opk_service.get_opk_scopes(req_scopes)
+        token = opk_service.id_token
+        # Step 2: Generate diverify proof
+        diverify_proof = {"level": trust_level, "identity": scopes}
+        breakpoint()
+        # Step 3: Request signing certificate if mode is "c"
+        if "attestation" in req_scopes or mode == "b" or mode == "c":
             payload = base64.b64decode(payload)
-            signature_material = sign(payload, token, diverify_proof, trust_level, mode=mode)
+            signer = DiVerifyDaemonSigner(opk_service.signer_key)
+            signature_material = signer.sign(payload, token, diverify_proof, trust_level, mode=mode)
 
             return signature_material
+    else:
+        # Step 1: Collect user scopes
+        scopes, token = get_scopes(req_scopes)
+        # Step 2: Generate diverify proof
+        diverify_proof = {"level": trust_level, "identity": scopes}
+        # Step 3: Request signing certificate if mode is "c"
+        if "attestation" in req_scopes or mode == "b" or mode == "c":
+                payload = base64.b64decode(payload)
+                signer = DiVerifyDaemonSigner(opk_service.signer_key)
+                signature_material = signer.sign(payload, token, diverify_proof, trust_level, mode=mode)
+
+                return signature_material
 
 @app.get("/auth/requirements")
 def get_auth_requirements(level: int):

@@ -42,7 +42,8 @@ class Hashed:
 def daemon_sign_artifact(payload, level, mode):
     response = requests.post(
         f"{DiVerify_Daemon_URL}/daemon/sign",
-        json={"payload": payload, "level": level, "mode": mode}
+        json={"payload": payload, "level": level, "mode": mode},
+        timeout=3
     )
     if not response.ok:
         raise RuntimeError(f"Daemon failed to sign payload: {response.text}")
