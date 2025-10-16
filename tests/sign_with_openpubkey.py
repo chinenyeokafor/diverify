@@ -61,7 +61,7 @@ def verify_openpubkey_signature(signature_material, payload, policy):
         verify_quote_and_signature(signature_material, payload, TEST_IDENTITY, TEST_ISSUER, policy)
 
 def run_mode_a(policy=None):
-    """Test Mode A with OpenPubkey."""
+    """Test Legacy Model (Mode A) with OpenPubkey."""
     logger.info("Testing OpenPubkey Mode A")
 
     # step 1:retrieve required scopes
@@ -90,8 +90,8 @@ def run_mode_a(policy=None):
     logger.info("Mode A OpenPubkey test successful")
 
 def run_mode_c(policy, mode="c"):
-    """Test Mode C with OpenPubkey and TEE attestation."""
-    logger.info("Testing OpenPubkey Mode C with TEE attestation")
+    """Test Core Model (Mode C) with OpenPubkey"""
+    logger.info("Testing OpenPubkey Mode C")
     
     payload = base64.b64encode(PAYLOAD).decode('utf-8')
     # step 1: forward to the Daemon to retrive scope, get attestation, bundle diverify proof, and sign
