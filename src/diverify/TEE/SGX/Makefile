@@ -24,7 +24,7 @@ diverify.manifest.sgx diverify.sig: sgx_sign
 .INTERMEDIATE: sgx_sign
 sgx_sign: diverify.manifest
 	@M=$$(gramine-sgx-sign --manifest $< --output $<.sgx 2>&1 | tee /dev/stderr | grep -A1 "Measurement:" | tail -1 | tr -d ' '); \
-	cd ../../../.. && sed -i "s/\"signer_measurement\": \"[^\"]*\"/\"signer_measurement\": \"$$M\"/" src/diverify/policies/*.json && \
+	cd ../../../.. && sed -i "s/\"signer_measurement\": \"[^\"]*\"/\"signer_measurement\": \"$$M\"/" src/diverify/policies/**/*.json && \
 	echo "Updated policies with measurement: $$M"
 
 .PHONY: clean

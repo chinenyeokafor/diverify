@@ -23,11 +23,7 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # provide enclave the absolute path
-# using the absolute path so enclave can find it
-if os.path.exists("/dev/sgx_enclave"):
-    TRUSTED_ROOT = "/home/diverify/config/stack_config.conf"
-else:
-    TRUSTED_ROOT = "config/stack_config.conf"
+TRUSTED_ROOT = "/home/diverify/config/stack_config.conf"
 
 config = Config(TRUSTED_ROOT)
 DEFAULT_FULCIO_URL = config.get_fulcio_service_url()
@@ -62,6 +58,7 @@ class DiVerifyDaemonSigner():
     def generate_key_pair(self) -> ec.EllipticCurvePrivateKey:
         """Generate an EC key pair."""
         private_key = ec.generate_private_key(ec.SECP256R1())
+        print("Generated new EC key pair for signing")
         return private_key
     
     @perf_utils.measure_latency
@@ -85,6 +82,7 @@ class DiVerifyDaemonSigner():
             in DiVerify proof that is embedded in the quote
         """
         perf_utils.set_test_mode(mode, trust_level)
+        print(f"Signing in mode {mode}")
         
         _decoded_token = jwt.decode(token, options={"verify_signature": False})
         try:
@@ -110,6 +108,7 @@ class DiVerifyDaemonSigner():
             "diverify_proof": diverify_proof
             }
         else:
+            print("Mode b signing")
             if jwt.decode(token, options={"verify_signature": False}).get('aud') == "https://accounts.opk_diverify.test":
                 print("Fulcio does not support opk-diverify mock provider, skipping mode test")
                 pass
@@ -121,7 +120,7 @@ class DiVerifyDaemonSigner():
                 certificate_response = self.get_fulcio_cert(csr, token)
 
                 # Sign the payload
-                hashed_input, artifact_signature = self.sign_artifact(self.private_key, payload)
+                hashed_input, artifact_signature = self.sign_artifact(payload)
 
                 signature_material = {
                 "hashed_input": hashed_input.to_dict(),
@@ -172,6 +171,7 @@ class DiVerifyDaemonSigner():
         }
         resp = requests.post(fulcio_url, certificate_request, headers=headers)
         if not resp.ok:
+            print(f"Identity token used: {identity}")
             raise Exception(resp.json().get("message", "Fulcio request failed"))
         
         certs = resp.json().get("signedCertificateEmbeddedSct", {}).get("chain", {}).get("certificates", [])

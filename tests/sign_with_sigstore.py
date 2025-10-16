@@ -1,9 +1,9 @@
 import jwt
 import json
-import base64
 import hashlib
 import logging
 import requests
+import base64
 from diverify.util.config import Config
 from securesystemslib.signer import SIGNER_FOR_URI_SCHEME, Signer
 from diverify.sigstore.signer import SigstoredSigner 
@@ -12,13 +12,14 @@ from diverify.sigstore.verifier import verify_signature, verify_quote_and_signat
 from cryptography.x509 import load_pem_x509_certificate
 from diverify.util import perf_utils
 from diverify.scope_providers.scope_provider_loader import load_scope_provider
+from diverify.util.common import Hashed
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 config = Config('config/stack_config.conf')
 DiVerify_Daemon_URL = config.get_diverify_url()
-
+usecase = "Sigstore"
 
 
 TEST_IDENTITY = (
@@ -28,22 +29,11 @@ TEST_IDENTITY = (
 TEST_ISSUER = "https://token.actions.githubusercontent.com"
 PAYLOAD = b"data"
 
-class Hashed:
-    def __init__(self, algorithm: str, digest: bytes):
-        self.algorithm = algorithm
-        self.digest = digest
-    
-    @classmethod
-    def from_dict(cls, data):
-        algorithm = data["algorithm"]
-        digest = base64.b64decode(data["digest"])
-        return cls(algorithm, digest)
-    
+
 def daemon_sign_artifact(payload, level, mode):
     response = requests.post(
         f"{DiVerify_Daemon_URL}/daemon/sign",
-        json={"payload": payload, "level": level, "mode": mode},
-        timeout=3
+        json={"payload": payload, "level": level, "mode": mode}
     )
     if not response.ok:
         raise RuntimeError(f"Daemon failed to sign payload: {response.text}")
@@ -153,11 +143,11 @@ if __name__ == "__main__":
     LEVEL = args.level
     perf_utils.set_test_mode(args.mode, args.level)
     if args.mode == "a":
-        policy = f"policy_a{args.level}.json"
+        policy = f"{usecase.lower()}/policy_a{args.level}.json"
         run_mode_a(policy)
     elif args.mode == "b":
-        policy = f"policy_{args.level}.json"
+        policy = f"{usecase.lower()}/policy_{args.level}.json"
         run_mode_b(policy)
     elif args.mode == "c":
-        policy = f"policy_{args.level}.json"
+        policy = f"{usecase.lower()}/policy_{args.level}.json"
         run_mode_c(policy)

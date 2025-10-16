@@ -17,11 +17,6 @@ class CryptoProvider:
     
     @staticmethod
     def generate_ec_key_pair() -> ec.EllipticCurvePrivateKey:
-        """Generate an ECDSA key pair using P-256 curve.
-        
-        Returns:
-            EC private key (public key accessible via .public_key())
-        """
         return ec.generate_private_key(ec.SECP256R1())
     
     @staticmethod

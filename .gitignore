@@ -28,3 +28,6 @@ tuf-metadata/*
 diverify.manifest
 diverify.manifest.sgx
 diverify.sig
+
+mock_provider_key.pem
+mock_provider_public_key.pem

@@ -1,0 +1,5 @@
+{
+  "identity": "user@opk_diverify.test",
+  "provider": "https://accounts.opk_diverify.test",
+  "rule": "(identity AND provider)"
+}

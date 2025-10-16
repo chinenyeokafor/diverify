@@ -14,10 +14,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format="%(levelname)s - %(message)s")
 
 # using the absolute path so enclave can find it
-if os.path.exists("/dev/sgx_enclave"):
-    TRUST_CONFIG_FILE = "/home/diverify/config/trust_config.json"
-else:
-    TRUST_CONFIG_FILE = "config/trust_config.json"
+TRUST_CONFIG_FILE = "/home/diverify/config/trust_config.json"
 
 
 app = FastAPI()
@@ -55,8 +52,8 @@ def sign_artifact(params: Dict):
         token = opk_service.id_token
         # Step 2: Generate diverify proof
         diverify_proof = {"level": trust_level, "identity": scopes}
-        breakpoint()
-        # Step 3: Request signing certificate if mode is "c"
+        
+        # Step 3: Request signing if mode is "c"
         if "attestation" in req_scopes or mode == "b" or mode == "c":
             payload = base64.b64decode(payload)
             signer = DiVerifyDaemonSigner(opk_service.signer_key)
@@ -71,7 +68,7 @@ def sign_artifact(params: Dict):
         # Step 3: Request signing certificate if mode is "c"
         if "attestation" in req_scopes or mode == "b" or mode == "c":
                 payload = base64.b64decode(payload)
-                signer = DiVerifyDaemonSigner(opk_service.signer_key)
+                signer = DiVerifyDaemonSigner()
                 signature_material = signer.sign(payload, token, diverify_proof, trust_level, mode=mode)
 
                 return signature_material

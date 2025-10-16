@@ -10,8 +10,7 @@
       "2": {
         "identity": {
           "oidc": true,
-          "device_fingerprint": true,
-          "source_local_scope": true
+          "device_fingerprint": true
         }
       },
       "3": {
