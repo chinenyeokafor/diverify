@@ -1,15 +1,8 @@
-"""
-DiVerify Fulcio Integration
-
-Handles certificate authority interactions and CSR creation with DiVerify proofs.
-"""
-
 import base64
 import json
 from dataclasses import dataclass
 from typing import Dict, List
 from urllib import parse
-
 import requests
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.x509 import (
@@ -17,7 +10,6 @@ from cryptography.x509 import (
     ObjectIdentifier, UnrecognizedExtension, load_pem_x509_certificate
 )
 from cryptography.x509.oid import NameOID
-
 from diverify.util import perf_utils
 from diverify.sigstore import DEFAULT_FULCIO_URL
 

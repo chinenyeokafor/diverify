@@ -1,8 +1,6 @@
 import os
-import base64
 import jwt
 import time
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat, PrivateFormat, NoEncryption
 
@@ -14,8 +12,6 @@ class MockOpenIDProvider:
         self.issuer = issuer
         self.key_file = "/home/diverify/src/diverify/openpubkey/mock_provider_key.pem"
         self.pub_key_file = "src/diverify/openpubkey/mock_provider_public_key.pem"
-        
-        # Load existing key or generate new one
         if os.path.exists(self.key_file):
             self._load_key()
         else:
@@ -38,13 +34,11 @@ class MockOpenIDProvider:
             ))
     
     def _load_key(self):
-        """Load private key from file"""
         from cryptography.hazmat.primitives.serialization import load_pem_private_key
         with open(self.key_file, 'rb') as f:
             self.op_provider_key = load_pem_private_key(f.read(), password=None)
     
     def get_public_key_pem(self):
-        """Get public key in PEM format for verification"""
         with open(self.pub_key_file, 'r') as f:
             return f.read()
     

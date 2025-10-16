@@ -3,7 +3,7 @@ import uvicorn
 from typing import Dict
 import uuid
 from diverify.daemon.scopes import get_scopes
-from diverify.daemon.sigstore_signer import DiVerifyDaemonSigner
+from diverify.daemon.signer import DiVerifyDaemonSigner
 from diverify.openpubkey.opk_scopes import OPKScopeService
 import base64
 import json

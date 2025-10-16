@@ -6,7 +6,6 @@ from typing import Dict
 from urllib.parse import urljoin
 import requests
 from cryptography.hazmat.primitives import serialization
-from securesystemslib.exceptions import UnsupportedLibraryError
 from securesystemslib.signer import Signature
 from sigstore.models import Bundle
 from sigstore_protobuf_specs.dev.sigstore.common.v1 import (

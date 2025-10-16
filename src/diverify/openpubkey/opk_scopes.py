@@ -3,7 +3,6 @@ import hashlib
 import base64
 import json
 import secrets
-import time
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat

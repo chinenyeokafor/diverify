@@ -23,7 +23,6 @@ def get_scopes(req_scopes):
                 "iss": claims.get('iss'),
                 "token_hash": hashlib.sha256(token.encode()).hexdigest()
                 }
-        
         elif auth == "device_fingerprint":
             scopes[auth] = DEVICE_FINGERPRINT
         elif auth == "security_key":

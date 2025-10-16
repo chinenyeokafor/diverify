@@ -1,10 +1,3 @@
-"""
-DiVerify Sigstore Signer
-
-Main signer implementation that orchestrates OIDC authentication, certificate signing,
-and artifact signing with DiVerify attestation proofs.
-"""
-
 import jwt
 from typing import Any, Dict, Tuple
 from urllib import parse

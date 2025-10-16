@@ -5,7 +5,7 @@ import hashlib
 import logging
 import requests
 from dataclasses import dataclass
-from typing import Tuple, Any, Dict
+from typing import Any, Dict
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import NameOID
@@ -16,7 +16,6 @@ from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
 from diverify.daemon.quote import get_quote, get_user_data
 from diverify.util import perf_utils
 from diverify.util.config import Config
-import os
 
 
 logging.basicConfig(level=logging.DEBUG)

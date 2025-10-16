@@ -130,8 +130,9 @@ class PolicyEvaluator:
             quote, diverify_proof = self.retrieve_quote(cert)
             key = cert.public_key()
             # self.show_cert(cert)
-        elif diverify_proof:   
-            quote = base64.b64decode(diverify_proof.pop("quote"))
+        elif diverify_proof:
+            quote_b64 = diverify_proof.pop("quote", None)
+            quote = base64.b64decode(quote_b64) if quote_b64 else None
             key = diverify_proof.get("public_key")
             key = serialization.load_pem_public_key(
                         key.encode('utf-8'),

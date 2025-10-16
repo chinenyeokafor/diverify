@@ -13,6 +13,7 @@ from cryptography.x509 import load_pem_x509_certificate
 from diverify.util import perf_utils
 from diverify.scope_providers.scope_provider_loader import load_scope_provider
 from diverify.util.common import Hashed
+from diverify.util.common import process_daemon_signature_material
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -92,18 +93,13 @@ def run_mode_a(policy=None):
     verify_sig(sig, policy)
 
 
-def run_mode_b(policy=None):
+def run_mode_b(policy, mode="b"):
     payload = base64.b64encode(PAYLOAD).decode('utf-8')
     @perf_utils.measure_latency
     def sign(payload, mode):
         return daemon_sign_artifact(payload, LEVEL, mode)
-    signature_material = sign(payload, mode="b")
-    signature_material = json.loads(base64.b64decode(signature_material).decode('utf-8'))
-    signature_material = {
-        "hashed_input": Hashed.from_dict(signature_material["hashed_input"]),
-        "artifact_signature": base64.b64decode(signature_material["artifact_signature"]),
-        "signing_cert": load_pem_x509_certificate(signature_material["signing_cert"].encode('utf-8')),
-    }
+    signature_material = sign(payload, mode)
+    signature_material = process_daemon_signature_material(signature_material, mode)
     sig = submit_to_tlog(signature_material)
 
     @perf_utils.measure_latency
@@ -113,18 +109,14 @@ def run_mode_b(policy=None):
     # Successful verification
     verify_sig(sig, policy)
 
-def run_mode_c(policy=None):
+def run_mode_c(policy, mode="c"):
     payload = base64.b64encode(PAYLOAD).decode('utf-8')
     @perf_utils.measure_latency
     def sign(payload, mode):
         return daemon_sign_artifact(payload, LEVEL, mode)
-    signature_material = sign(payload, mode="c")
-    signature_material = json.loads(base64.b64decode(signature_material).decode('utf-8'))
-    signature_material = {
-        "hashed_input": Hashed.from_dict(signature_material["hashed_input"]),
-        "artifact_signature": base64.b64decode(signature_material["artifact_signature"]),
-        "diverify_proof": signature_material["diverify_proof"],
-    }
+    signature_material = sign(payload, mode)
+    signature_material = process_daemon_signature_material(signature_material, mode)
+
 
     @perf_utils.measure_latency
     def verify_sig(sig, policy):

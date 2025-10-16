@@ -1,9 +1,3 @@
-"""
-DiVerify OIDC Authentication
-
-Handles OAuth2/OIDC flows and token management for DiVerify.
-"""
-
 import base64
 import hashlib
 import http.server
@@ -64,12 +58,6 @@ class OIDCAuthenticator:
         return raw_token, decoded_token
 
     def _get_authorization_code(self, nonce, client_id: str, client_secret: str, limit_scope: bool = False) -> Tuple[str, str, str]:
-        """Start OAuth2 flow and capture authorization code.
-        
-        Returns:
-            Tuple of (auth_code, redirect_uri, code_verifier)
-        """
-        
         class AuthHandler(http.server.BaseHTTPRequestHandler):
             """Handles the OAuth2 redirect and extracts the auth code."""
             def do_GET(self):
@@ -127,11 +115,6 @@ class OIDCAuthenticator:
 
     @staticmethod
     def _generate_pkce_challenge() -> Tuple[str, str]:
-        """Generate PKCE challenge (S256).
-        
-        Returns:
-            Tuple of (code_verifier, code_challenge)
-        """
         code_verifier = base64.urlsafe_b64encode(os.urandom(32)).rstrip(b"=").decode()
         code_challenge = base64.urlsafe_b64encode(
             hashlib.sha256(code_verifier.encode()).digest()

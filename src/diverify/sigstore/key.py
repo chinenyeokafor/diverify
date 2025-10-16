@@ -1,17 +1,9 @@
-"""
-DiVerify Sigstore Key Management
-
-Handles key representation and validation for DiVerify-enhanced Sigstore keys.
-"""
-
 from typing import Any
 from securesystemslib.signer._signer import Key, Signature
 from securesystemslib.signer._utils import compute_default_keyid
 
 
 class SigstoredKey(Key):
-    """Sigstore OIDC key with DiVerify attestation capabilities."""
-    
     DEFAULT_KEY_TYPE = "sigstore-oidc"
     DEFAULT_SCHEME = "Fulcio"
 
