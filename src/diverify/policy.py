@@ -12,6 +12,9 @@ from cryptography.exceptions import InvalidSignature
 from securesystemslib.exceptions import VerificationError
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric.ed25519 import (
+    Ed25519PublicKey,
+)
 from diverify.daemon.quote import validate_user_data
 from diverify.util import perf_utils
 from tuf.api.exceptions import DownloadError, RepositoryError
@@ -22,88 +25,162 @@ KEY_FOR_TYPE_AND_SCHEME.update({("sigstore-oidc", "Fulcio"): SigstoreKey,})
 logger = logging.getLogger(__name__)
 
 class PolicyEvaluator:
-    def __init__(self, policy_file: str = None):
-        """Initialize with a policy file using TUF, or fall back to local for other debug tests"""
-        # self.policy = self.get_policy_from_tuf(policy_file)
-        self.policy = None
-        if not self.policy:
-            policy_path = self.get_policy_path(policy_file)
-            self.policy = self.load_policy(policy_path)
+    def __init__(
+        self,
+        policy_file: str = None,
+        policy_meta_file: str = None,
+        policy_pubkey_file: str = None,
+        state_file: str = None,
+    ):
+        """
+        Native DiVerify policy lifecycle:
+        - load local policy bundle
+        - verify signed metadata
+        - verify policy hash
+        - reject rollback using locally stored latest-seen state
+        """
         
-    
-    @perf_utils.measure_latency
-    def get_policy_from_tuf(self, target = "policy_a1.json"):
 
-        base_url = "http://diverify_web:8083"
-        DOWNLOAD_DIR = "/home"
+        self.policy_dir = Path(os.path.dirname(__file__)) / "policies"
+        self.metadata_dir = Path(__file__).resolve().parents[2] / "metadata" / "policies"
 
-        metadata_dir = self.build_metadata_dir(base_url)
+        self.policy_file = policy_file or "policy_a1.json"
+        self.policy_meta_file = policy_meta_file or self._default_meta_name(self.policy_file)
+        self.policy_pubkey_file = policy_pubkey_file or "policy_pub.pem"
+        self.state_file = state_file or ".policy_state.json"
 
-        if not os.path.isfile(f"{metadata_dir}/root.json"):
-            print(
-                "Trusted local root not found. Use 'tofu' command to "
-                "Trust-On-First-Use or copy trusted root metadata to "
-                f"{metadata_dir}/root.json"
-            )
-            return False
+        self.policy_path = self._resolve_policy_path(self.policy_file)
+        self.meta_path = self._resolve_metadata_path(self.policy_meta_file)
+        self.pubkey_path = self._resolve_metadata_path(self.policy_pubkey_file)
+        self.state_path = self._resolve_metadata_path(self.state_file)
+        print(f"Using state path: {self.state_path}")
 
-        logger.debug(f"Using trusted root in {metadata_dir}")
+        self.policy = self._load_verified_policy_bundle()
 
-        if not os.path.isdir(DOWNLOAD_DIR):
-            os.mkdir(DOWNLOAD_DIR)
+    def _resolve_policy_path(self, filename: str) -> Path:
+        path = Path(filename)
+        if path.is_absolute() or path.exists():
+            if not path.exists():
+                raise FileNotFoundError(f"Policy file not found: {path}")
+            return path
 
-        updater_config = UpdaterConfig(
-            prefix_targets_with_hash=False
-        )
+        path = self.policy_dir / filename
+        if not path.exists():
+            raise FileNotFoundError(f"Policy file not found: {path}")
+        return path
+
+
+    def _resolve_metadata_path(self, filename: str) -> Path:
+        path = Path(filename)
+        if path.is_absolute() or path.exists():
+            return path
+
+        return self.metadata_dir / filename
+
+    def _default_meta_name(self, policy_file: str) -> str:
+        if policy_file.endswith(".json"):
+            return policy_file[:-5] + ".meta.json"
+        return policy_file + ".meta.json"
+
+    def _read_json(self, path: Path) -> dict:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    def _write_json(self, path: Path, obj: dict) -> None:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(obj, f, indent=2, sort_keys=True)
+
+    def _canonical_json_bytes(self, obj: dict) -> bytes:
+        return json.dumps(obj, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+    def _load_pubkey(self) -> Ed25519PublicKey:
+        with open(self.pubkey_path, "rb") as f:
+            pem = f.read()
+        key = serialization.load_pem_public_key(pem)
+        if not isinstance(key, Ed25519PublicKey):
+            raise VerificationError("Policy public key must be an Ed25519 public key")
+        return key
+
+    def _verify_metadata_signature(self, metadata: dict) -> None:
+        if "signature" not in metadata:
+            raise VerificationError("Policy metadata missing 'signature'")
+
+        sig_hex = metadata["signature"]
+        signed_fields = dict(metadata)
+        del signed_fields["signature"]
+
+        pubkey = self._load_pubkey()
         try:
+            pubkey.verify(bytes.fromhex(sig_hex), self._canonical_json_bytes(signed_fields))
+        except InvalidSignature as e:
+            raise VerificationError("Invalid policy metadata signature") from e
 
-            metadata_base_url='http://tuf-metadata:8082'
-            updater = Updater(
-                metadata_dir=metadata_dir,
-                metadata_base_url=metadata_base_url,
-                target_base_url=base_url,
-                target_dir=DOWNLOAD_DIR,
-                config=updater_config,
-
+    def _verify_policy_hash(self, metadata: dict, policy_bytes: bytes) -> None:
+        expected = metadata.get("policy_hash")
+        actual = sha256(policy_bytes).hexdigest()
+        if expected != actual:
+            raise VerificationError(
+                f"Policy hash mismatch: expected {expected}, got {actual}"
             )
-            updater.refresh()
-            
-            info = updater.get_targetinfo(target)
 
-            if info is None:
-                print(f"Target {target} not found")
-                return self.load_policy(path)
+    def _load_state(self) -> dict:
+        if not self.state_path.exists():
+            return {}
+        return self._read_json(self.state_path)
 
-            path = updater.find_cached_target(info)
-            if path:
-                logger.debug(f"Target is available in {path}")
-                return self.load_policy(path)
+    def _save_state(self, state: dict) -> None:
+        self.state_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.state_path, "w", encoding="utf-8") as f:
+            json.dump(state, f, indent=2, sort_keys=True)
 
-            path = updater.download_target(info)
-            # print(f"Target downloaded and available in {path}")
+    def _check_and_update_state(self, metadata: dict) -> None:
+        policy_id = metadata["policy_id"]
+        new_version = int(metadata["version"])
+        new_epoch = int(metadata["epoch"])
 
-        except (OSError, RepositoryError, DownloadError) as e:
-            print(f"Failed to download target {target}: {e}")
-            if logging.root.level < logging.ERROR:
-                traceback.print_exc()
-            return ""
-        return self.load_policy(path)
-        
+        state = self._load_state()
+        current = state.get(policy_id)
 
-    def build_metadata_dir(self, base_url: str) -> str:
-        """build a unique and reproducible directory name for the repository url"""
-        name = sha256(base_url.encode()).hexdigest()[:8]
-        # TODO: Make this not windows hostile?
-        return "./tuf-metadata"
+        # First time seeing this policy
+        if current is None:
+            logger.info(f"Initializing policy state for {policy_id} at version={new_version}, epoch={new_epoch}")
+            state[policy_id] = {"version": new_version, "epoch": new_epoch}
+            self._save_state(state)
+            return
 
-    def get_policy_path(self, policy_file) -> str:
-        policy_path = Path(os.path.join(os.path.dirname(__file__), 'policies', policy_file))
-        if not policy_path.exists():
-            raise FileNotFoundError(f"Policy file not found: {policy_path}")
-        return policy_path
+        # Existing policy: enforce monotonicity
+        seen_version = int(current["version"])
+        seen_epoch = int(current["epoch"])
+
+        if new_version < seen_version:
+            raise VerificationError(
+                f"Policy rollback detected: version {new_version} < {seen_version}"
+            )
+
+        if new_version == seen_version and new_epoch < seen_epoch:
+            raise VerificationError(
+                f"Policy rollback detected: epoch {new_epoch} < {seen_epoch}"
+            )
+
+        # update state
+        state[policy_id] = {"version": new_version, "epoch": new_epoch}
+        self._save_state(state)
+
+    @perf_utils.measure_latency
+    def _load_verified_policy_bundle(self) -> dict:
+        metadata = self._read_json(self.meta_path)
+
+        with open(self.policy_path, "rb") as f:
+            policy_bytes = f.read()
+
+        self._verify_metadata_signature(metadata)
+        self._verify_policy_hash(metadata, policy_bytes)
+        self._check_and_update_state(metadata)
+
+        return json.loads(policy_bytes.decode("utf-8"))
 
     def load_policy(self, file_path: str) -> dict:
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             return json.load(f)
 
     def build_context(self, diverify_proof, mrenclave) -> dict:
@@ -235,3 +312,19 @@ class PolicyEvaluator:
         text_output = crypto.dump_certificate(crypto.FILETYPE_TEXT, cert)
         logging.info(f"Signing Certificate: {text_output.decode('utf-8')}")
 
+if __name__ == "__main__":
+    from pathlib import Path
+
+    policy_dir = Path("src/diverify/policies")
+    metadata_dir = Path("metadata/policies")
+
+    for p in policy_dir.glob("*.json"):
+        try:
+            PolicyEvaluator(
+                policy_file=str(p),
+                policy_meta_file=str(metadata_dir / f"{p.stem}.meta.json"),
+                policy_pubkey_file=str(metadata_dir / "policy_pub.pem"),
+            )
+            print(f"[OK] {p.name}")
+        except Exception as e:
+            print(f"[FAIL] {p.name}: {e}")
