@@ -1,6 +1,6 @@
 {
   "identity": "user@opk_diverify.test",
   "provider": "https://accounts.opk_diverify.test",
-  "signer_measurement": "aaa4202c9823feeca2ab4b3ffae98d096b82f6aced763ba07b142fe3658278e2",
+  "signer_measurement": "3587dc9f50fddabb453b306c896e6fdc26ab6411c8f51829aa323f8dd449bed6",
   "rule": "(identity AND provider) AND signer_measurement"
 }
