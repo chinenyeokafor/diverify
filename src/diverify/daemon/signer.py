@@ -34,7 +34,7 @@ def generate_key_pair() -> Tuple[ec.EllipticCurvePrivateKey, ec.EllipticCurvePub
     return private_key
 
 # @perf_utils.measure_latency
-def sign(payload: bytes, token, diverify_proof: Dict, trust_level, mode=None) -> dict[str, Any]:
+def sign(payload: bytes, token, diverify_proof: Dict, trust_level, mode=None, iteration=0) -> dict[str, Any]:
     """ We only sign in daemon if mode b or c is selected 
     We want to do the following:
     1. Generate a key pair  
@@ -42,8 +42,6 @@ def sign(payload: bytes, token, diverify_proof: Dict, trust_level, mode=None) ->
     2b. If it is mode c, we don't need a certificate. We just embed the signing key 
         in DiVerify proof that is embedded in the quote
     """
-    perf_utils.set_test_mode(mode, trust_level)
-
     private_key = generate_key_pair()
     
     _decoded_token = jwt.decode(token, options={"verify_signature": False})

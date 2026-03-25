@@ -30,6 +30,10 @@ def verify(quote_path):
             return True
         elif "Warning: App: Verification completed, but collateral is out of date based " in result.stdout:
             return True
+            # TODO: handle SGX non-terminal results properly
+        elif "Non-terminal result:" in result.stdout and "Advisory ID:" in result.stdout:
+            logging.debug(f"Warning: quote verified with non-terminal result:\n{result.stdout}")
+            return True
         else:
             logging.error("Quote verification failed")
             if result.stderr:

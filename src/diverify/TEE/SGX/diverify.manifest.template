@@ -12,7 +12,8 @@ loader.env.PYTHONPATH = "/venv/lib/python3.12/site-packages:/home/diverify"
 
 loader.insecure__use_cmdline_argv = false
 
-loader.env.PERF_MODE = "false"
+loader.env.PERF_MODE = "true"
+loader.env.PERF_LOG = "daemon_perf_log.jsonl"
 
 loader.argv = ["/venv/bin/python", "/home/diverify/src/diverify/daemon/div_daemon.py"]
 sys.enable_sigterm_injection = true
@@ -66,6 +67,7 @@ sgx.trusted_files = [
 sgx.allowed_files = [
   "file:/tmp/",
   "file:perf_log.csv",
+  "file:daemon_perf_log.jsonl",
   "file:./.venv/",
   "file:./.venv/bin/python",
   "file:/home/SGXDataCenterAttestationPrimitives/",

@@ -2,11 +2,17 @@ from fastapi import FastAPI, HTTPException
 import uvicorn
 from typing import Dict
 import uuid
+import os
 from diverify.daemon.scopes import get_scopes
-from diverify.daemon.signer import sign
 import base64
 import json
 import logging
+
+# if os.getenv("PERF_MODE", "false").lower() == "true" and not os.getenv("PERF_LOG"):
+#     os.environ["PERF_LOG"] = "daemon_perf_log.csv"
+
+from diverify.daemon.signer import sign
+from diverify.util import perf_utils
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format="%(levelname)s - %(message)s")
@@ -37,9 +43,12 @@ def sign_artifact(params: Dict):
         trust_level = params["level"]
         payload = params["payload"]
         mode = params["mode"]
+        iteration = params.get("iteration", 0)
     except KeyError as e:
         raise HTTPException(status_code=400, detail=f"Missing parameter: {str(e)}")
         
+    perf_utils.set_test_mode(mode, trust_level, iteration=iteration)
+
     # Step 1: Collect user scopes
     req_scopes = get_auth_requirements(trust_level)["auth_requirements"]
     scopes, token = get_scopes(req_scopes)
@@ -48,9 +57,11 @@ def sign_artifact(params: Dict):
     # Step 3: Request signing certificate if mode is "c"
     if "attestation" in req_scopes or mode == "b" or mode == "c":
             payload = base64.b64decode(payload)
-            signature_material = sign(payload, token, diverify_proof, trust_level, mode=mode)
-
-            return signature_material
+            try:
+                signature_material = sign(payload, token, diverify_proof, trust_level, mode=mode, iteration=iteration)
+                return signature_material
+            finally:
+                perf_utils.flush_perf()
 
 @app.get("/auth/requirements")
 def get_auth_requirements(level: int):

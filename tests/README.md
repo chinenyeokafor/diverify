@@ -78,21 +78,27 @@ python /diverify/util/generate_trusted_root.py
 ### 8. Start DiVerify Daemon and Run Tests
 **Inside the `securesystemslib` container:**
 
-- **Terminal 1**: Start the DiVerify daemon:
-  ```bash
-  cd /home/securesystemslib
-  make clean && make && gramine-sgx ./diverify
-  ```
+- **Terminal 1**: Follow ../src/diverify/TEE/SGX/README.md to start the DiVerify daemon
 
 - **Terminal 2**: Run the test scripts:
   ```bash
   cd /home/securesystemslib
-  tests_diverify/run.sh
+  tests/run.sh
   ```
 
 This runs tests across **three modes** and **three levels**.
 
 ---
+
+### 9. Evaluate performance
+The above generates client and daemon data `perf_log.jsonl` and `src/diverify/TEE/SGX/daemon_perf_log.jsonl`
+Run the scripts to combine data and average the result:
+  ```bash
+  python tests/combine_perf_logs.py 
+  python tests/avg_perf.py 
+
+  ```
+Signing and verification overhead data is then saved to `sig_data_eval/avg_perf.csv`
 
 ## Errors / Issues
 

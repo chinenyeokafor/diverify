@@ -24,6 +24,11 @@ This directory provides configuration and setup for running the DiVerify daemon 
     - `diverify.sig`
     and updates the `signer_measurement` values in the policies.
 
+4b. Sign all the updated policies
+    ```bash
+        python sign_policy.py --version 2  --epoch 1
+    ```
+
 5. Set up Python virtual environment and dependencies:
     ```bash
     cd /home/diverify/src/diverify/TEE/SGX

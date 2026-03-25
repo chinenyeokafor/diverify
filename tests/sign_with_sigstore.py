@@ -3,7 +3,11 @@ import json
 import base64
 import hashlib
 import logging
+import csv
+from datetime import datetime
+from pathlib import Path
 import requests
+from cryptography.hazmat.primitives import serialization
 from diverify.util.config import Config
 from securesystemslib.signer import SIGNER_FOR_URI_SCHEME, Signer
 from diverify.sigstore.signer import SigstoredSigner 
@@ -27,6 +31,48 @@ TEST_IDENTITY = (
 )
 TEST_ISSUER = "https://token.actions.githubusercontent.com"
 PAYLOAD = b"data"
+CSV_PATH = None
+ITERATION = 0
+
+
+def _normalize(value):
+    if isinstance(value, dict):
+        return {k: _normalize(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_normalize(v) for v in value]
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    if isinstance(value, bytes):
+        return base64.b64encode(value).decode("utf-8")
+    if isinstance(value, Hashed):
+        return value.to_dict()
+    if hasattr(value, "public_bytes"):
+        try:
+            return value.public_bytes(encoding=serialization.Encoding.PEM).decode("utf-8")
+        except Exception:
+            pass
+    if hasattr(value, "to_dict"):
+        try:
+            return _normalize(value.to_dict())
+        except Exception:
+            pass
+    if hasattr(value, "__dict__"):
+        return _normalize(vars(value))
+    return str(value)
+
+
+def append_sig_bundle_csv(mode, level, bundle):
+    if not CSV_PATH:
+        return
+    path = Path(CSV_PATH)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    is_new = not path.exists()
+    bundle_json = json.dumps(_normalize(bundle), separators=(",", ":"))
+    with path.open("a", newline="") as f:
+        writer = csv.writer(f)
+        if is_new:
+            writer.writerow(["timestamp", "mode", "level", "bundle_json"])
+        writer.writerow([datetime.utcnow().isoformat(), mode, level, bundle_json])
 
 class Hashed:
     def __init__(self, algorithm: str, digest: bytes):
@@ -38,11 +84,17 @@ class Hashed:
         algorithm = data["algorithm"]
         digest = base64.b64decode(data["digest"])
         return cls(algorithm, digest)
+
+    def to_dict(self):
+        return {
+            "algorithm": self.algorithm,
+            "digest": base64.b64encode(self.digest).decode("utf-8"),
+        }
     
 def daemon_sign_artifact(payload, level, mode):
     response = requests.post(
         f"{DiVerify_Daemon_URL}/daemon/sign",
-        json={"payload": payload, "level": level, "mode": mode}
+        json={"payload": payload, "level": level, "mode": mode, "iteration": ITERATION}
     )
     if not response.ok:
         raise RuntimeError(f"Daemon failed to sign payload: {response.text}")
@@ -91,6 +143,7 @@ def run_mode_a(policy=None):
         return signer, signer.sign(PAYLOAD, diverify_proof)
     signer, signature_material = sign(required_auth)
     sig = submit_to_tlog(signature_material)
+    append_sig_bundle_csv("a", LEVEL, {"signature_bundle": sig})
     
 
     @perf_utils.measure_latency
@@ -107,13 +160,16 @@ def run_mode_b(policy=None):
     def sign(payload, mode):
         return daemon_sign_artifact(payload, LEVEL, mode)
     signature_material = sign(payload, mode="b")
-    signature_material = json.loads(base64.b64decode(signature_material).decode('utf-8'))
+    signature_material_json = json.loads(base64.b64decode(signature_material).decode('utf-8'))
+    signature_material = signature_material_json
     signature_material = {
         "hashed_input": Hashed.from_dict(signature_material["hashed_input"]),
         "artifact_signature": base64.b64decode(signature_material["artifact_signature"]),
         "signing_cert": load_pem_x509_certificate(signature_material["signing_cert"].encode('utf-8')),
     }
     sig = submit_to_tlog(signature_material)
+
+    append_sig_bundle_csv("b", LEVEL, {"signature_bundle": sig})
 
     @perf_utils.measure_latency
     def verify_sig(sig, policy):
@@ -128,7 +184,9 @@ def run_mode_c(policy=None):
     def sign(payload, mode):
         return daemon_sign_artifact(payload, LEVEL, mode)
     signature_material = sign(payload, mode="c")
-    signature_material = json.loads(base64.b64decode(signature_material).decode('utf-8'))
+    signature_material_json = json.loads(base64.b64decode(signature_material).decode('utf-8'))
+    append_sig_bundle_csv("c", LEVEL, {"signature_material": signature_material_json})
+    signature_material = signature_material_json
     signature_material = {
         "hashed_input": Hashed.from_dict(signature_material["hashed_input"]),
         "artifact_signature": base64.b64decode(signature_material["artifact_signature"]),
@@ -147,10 +205,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the script in different modes: a, b, or c.")
     parser.add_argument("--mode", choices=["a", "b", "c"], required=True, help="Mode to run: a, b, or c")
     parser.add_argument("--level", type=int, default=1, help="Optional level parameter (default: 1)")
+    parser.add_argument("--iter", type=int, default=0, help="Iteration number for perf tracking")
+    parser.add_argument("--csv", default="sig_data_eval/sig_bundles.csv", help="CSV output path for saved signature bundles")
     args = parser.parse_args()
 
     LEVEL = args.level
-    perf_utils.set_test_mode(args.mode, args.level)
+    ITERATION = args.iter
+    CSV_PATH = args.csv
+    perf_utils.set_test_mode(args.mode, args.level, iteration=args.iter)
     if args.mode == "a":
         policy = f"policy_a{args.level}.json"
         run_mode_a(policy)
@@ -160,3 +222,4 @@ if __name__ == "__main__":
     elif args.mode == "c":
         policy = f"policy_{args.level}.json"
         run_mode_c(policy)
+    perf_utils.flush_perf()

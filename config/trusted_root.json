@@ -5,7 +5,7 @@
             "baseUrl": "http://sigstore-rekor:3000",
             "hashAlgorithm": "SHA2_256",
             "publicKey": {
-                "rawBytes": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEOdCwmRuLjYUGZo6Mghuh8DBHzecOclm933TeFUf9KeLjEMb0ZPuYnv6ziF5pkR1F5ugwKRrQ2sOgg1MZO5HT6w==",
+                "rawBytes": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEF4IhF250MTPadElKOhI6VjincooFfQS2VV8mTF9Cj0QAM7YM+SB2gS69rO0/XVydLMHOZt5XWdAPnWsCxpOq7w==",
                 "keyDetails": "PKIX_ECDSA_P256_SHA_256",
                 "validFor": {
                     "start": "2021-01-12T11:53:27.000Z"

@@ -1,11 +1,14 @@
 import jwt
 import hashlib
 import requests
-import time
+import time, json
+from base64 import b64decode
+from datetime import datetime
 from diverify.scope_providers.scope_provider_loader import load_scope_provider
 from diverify.util import perf_utils
 
 DEVICE_FINGERPRINT = load_scope_provider("device_fingerprint").verify()
+PIV_ATTESTATION = load_scope_provider("security_key").verify()
 ISSUER = "https://token.actions.githubusercontent.com"
 AUDIENCE = "sigstore"
 
@@ -27,7 +30,7 @@ def get_scopes(req_scopes):
         elif auth == "device_fingerprint":
             scopes[auth] = DEVICE_FINGERPRINT
         elif auth == "security_key":
-            piv_attestation = load_scope_provider(auth).verify()
+            piv_attestation = PIV_ATTESTATION or load_scope_provider(auth).verify()
             scopes[auth] = piv_attestation
         elif auth == "source_local_scope":
             limit_scope_flag = True
@@ -40,9 +43,12 @@ def get_scopes(req_scopes):
 
 def get_identity_token() -> str:
     url = "https://raw.githubusercontent.com/sigstore-conformance/extremely-dangerous-public-oidc-beacon/current-token/oidc-token.txt"
-    response = requests.get(url)
-    token = response.text.strip()
-    return token
+    while True:
+        token = requests.get(url).text.strip()
+        p = token.split(".")[1] + "=" * (-len(token.split(".")[1]) % 4)
+        if datetime.now().timestamp() + 5 < json.loads(b64decode(p))["exp"]:
+            return token
+        time.sleep(5)
 
 def validate_scopes(auth_result: dict) -> bool:
     # Client verifies only the validity of the oidc token. The rest are validated by the verifier

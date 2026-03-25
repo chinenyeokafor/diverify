@@ -28,3 +28,7 @@ tuf-metadata/*
 diverify.manifest
 diverify.manifest.sgx
 diverify.sig
+
+keys/
+metadata/
+
