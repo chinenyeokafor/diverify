@@ -33,7 +33,7 @@ def generate_key_pair() -> Tuple[ec.EllipticCurvePrivateKey, ec.EllipticCurvePub
     private_key = ec.generate_private_key(ec.SECP256R1())
     return private_key
 
-# @perf_utils.measure_latency
+@perf_utils.measure_latency
 def sign(payload: bytes, token, diverify_proof: Dict, trust_level, mode=None, iteration=0) -> dict[str, Any]:
     """ We only sign in daemon if mode b or c is selected 
     We want to do the following:

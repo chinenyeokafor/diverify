@@ -1,51 +1,41 @@
 # DiVerify Evaluation Guide
 
-This guide provides instructions for me to set up and evaluate the DiVerify project using `securesystemslib`, Sigstore's local infrastructure (Fulcio CA, Rekor, and CTLog).
+This guide provides instructions for me to set up and evaluate the DiVerify project, Sigstore's local infrastructure (Fulcio CA, Rekor, and CTLog).
 
 The experiment is run on a host with **SGX capability**.
 
 ---
 
 ## Components Needed
-1. `securesystemslib` for signing and verification
 2. Fulcio Certificate Authority for certificate issuance
 3. CTLog for certificate logging
 4. Rekor for signature logging
-5. RSTUF for distribution of DiVerify policy
 
 ---
 
 ## Steps
 
 ### 1. Clone Repositories
-I need to clone the following repositories to my home directory:
+Clone the following repositories to home directory:
 
-- **[securesystemslib](https://github.com/chinenyeokafor/securesystemslib/tree/DiVerify)**
-- **[rstuf](https://github.com/chinenyeokafor/rstuf)**
+- **[securesystemslib](https://github.com/chinenyeokafor/diverify)**
 - **[containerized_sigstore](https://github.com/chinenyeokafor/sigstore_containerized)**
 
----
 
-### 2. Set Up RSTUF
-Follow [link](https://repository-service-tuf.readthedocs.io/en/stable/guide/deployment/setup.html#service-setup) to set up RSTUF for the key ceremony.  
-Then, add policy delegation and sign accordingly.
-
----
-
-### 3. SGX & Enclave Requirements
+### 2. SGX & Enclave Requirements
 `securesystemslib` and `fulcio` require enclaves for trusted signing and quote/QVL verification.  
 **SGX must be properly configured** in the container.  
-I can either follow this GitHub Gist [link](https://gist.github.com/chinenyeokafor/af1401c38b177dd1a889f32d286964a6#file-intel_sgx_remote_attestation_setup-md) for setup or use a custom base image I've pre-configured for SGX, such as the one in my Docker Compose file.
+Either follow this GitHub Gist [link](https://gist.github.com/chinenyeokafor/af1401c38b177dd1a889f32d286964a6#file-intel_sgx_remote_attestation_setup-md) for setup or use a custom base image I've pre-configured for SGX, such as the one in my Docker Compose file.
 
 ---
 
-### 4. Deploy Infrastructure
+### 3. Deploy Infrastructure
 - Deploy **Sigstore infra** and **securesystemslib** using the `docker-compose-deverify.yml` file in the `containerized_sigstore` directory.
 - Deploy **rstuf** using `docker-compose.yml` in the `rstuf` directory.
 
 ---
 
-### 5. Start PCCS Services
+### 4. Start PCCS Services
 Inside the `securesystemslib` and `fulcio` containers, start the PCCS service:
 
 ```bash
@@ -55,7 +45,7 @@ node pccs_server.js &
 
 ---
 
-### 6. Start Fulcio Service
+### 5. Start Fulcio Service
 Inside the `fulcio` container, start fulcio service:
 
 ```bash
@@ -65,7 +55,7 @@ cd /home/fulio-Div
 
 ---
 
-### 7. Generate Local Root of Trust
+### 6. Generate Local Root of Trust
 We use `securesystemslib` for the client and verifier.  
 To generate the local Sigstore infra root of trust, run:
 
@@ -75,7 +65,7 @@ python /diverify/util/generate_trusted_root.py
 
 ---
 
-### 8. Start DiVerify Daemon and Run Tests
+### 7. Start DiVerify Daemon and Run Tests
 **Inside the `securesystemslib` container:**
 
 - **Terminal 1**: Follow ../src/diverify/TEE/SGX/README.md to start the DiVerify daemon
@@ -90,18 +80,26 @@ This runs tests across **three modes** and **three levels**.
 
 ---
 
-### 9. Evaluate performance
-The above generates client and daemon data `perf_log.jsonl` and `src/diverify/TEE/SGX/daemon_perf_log.jsonl`
-Run the scripts to combine data and average the result:
+### 9. Evaluate performance and storage cost
+The previous step generates client and daemon logs for signing and verification latency: `perf_log.jsonl` and `src/diverify/TEE/SGX/daemon_perf_log.jsonl`. It also generates `sig_data_eval/sig_bundles.csv` for storage cost evaluation.
+
+- Run these scripts to merge logs and compute averages (output: `sig_data_eval/avg_perf.csv`):
   ```bash
-  python tests/combine_perf_logs.py 
-  python tests/avg_perf.py 
-
+  python tests/combine_perf_logs.py
+  python tests/avg_perf.py
   ```
-Signing and verification overhead data is then saved to `sig_data_eval/avg_perf.csv`
 
+- Run this script to compute storage overhead:
+  ```bash
+  python tests/sig_overhead.py
+  ```
+
+- Run this to compute integration effort:
+``` bash
+  cloc src/diverify/daemon/ src/diverify/scope_providers/ src/diverify/util src/diverify/sigstore/ sign_policy.py src/diverify/policy.py --exclude-dir=.venv,venv,__pycache__
+```
 ## Errors / Issues
 
 ### Error: Failed to download target policy*.json
-**Cause**: Policy not found or TUF policies expired.  
-**Fix**: Need to re-sign and retry.
+**Cause**: Policy not authenticating  
+**Fix**: Need to sign policy following on step 7 and retry.
