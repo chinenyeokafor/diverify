@@ -25,11 +25,8 @@ DiVerify_Daemon_URL = config.get_diverify_url()
 
 
 
-TEST_IDENTITY = (
-    "https://github.com/sigstore-conformance/extremely-dangerous-public-oidc-beacon/.github/"
-    "workflows/extremely-dangerous-oidc-beacon.yml@refs/heads/main"
-)
-TEST_ISSUER = "https://token.actions.githubusercontent.com"
+TEST_IDENTITY = "untrusted-sa@sigstore-conformance.iam.gserviceaccount.com"
+TEST_ISSUER = "https://accounts.google.com"
 PAYLOAD = b"data"
 CSV_PATH = None
 ITERATION = 0
@@ -109,6 +106,7 @@ def run_mode_a(policy=None):
     import uuid
     nonce = str(uuid.uuid4())
 
+    print("Signing--------------------------")
     SIGNER_FOR_URI_SCHEME[SigstoredSigner.SCHEME] = SigstoredSigner
     uri, public_key=SigstoredSigner.import_(TEST_IDENTITY, TEST_ISSUER, ambient=True, nonce=nonce)
     required_auth = config["levels"].get(str(LEVEL), {}).get("identity", {})
@@ -134,7 +132,7 @@ def run_mode_a(policy=None):
 
         claims = jwt.decode(token, options={"verify_signature": False})
         proofs["oidc"] = {
-                "sub": "https://github.com/" + claims.get('job_workflow_ref'),
+                "sub": str(claims.get('sub')),
                 "iss": claims.get('iss'),
                 "token_hash": hashlib.sha256(token.encode()).hexdigest()
                 }
@@ -151,6 +149,7 @@ def run_mode_a(policy=None):
         verify_signature(sig, PAYLOAD, TEST_IDENTITY, TEST_ISSUER, policy)
 
     # Successful verification
+    print("Verifying--------------------------")
     verify_sig(sig, policy)
 
 

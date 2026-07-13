@@ -32,3 +32,6 @@ diverify.sig
 keys/
 metadata/
 
+config/trusted_root.json
+
+

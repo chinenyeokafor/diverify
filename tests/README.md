@@ -4,6 +4,13 @@ This guide provides instructions for me to set up and evaluate the DiVerify proj
 
 The experiment is run on a host with **SGX capability**.
 
+## Platform Requirements
+
+- Intel CPU with SGX support enabled in BIOS/UEFI.
+- A Linux host with Docker and Docker Compose installed.
+- SGX runtime support configured in the containers used for DiVerify and Fulcio.
+- No GPU is required.
+
 ---
 
 ## Components Needed
@@ -18,25 +25,24 @@ The experiment is run on a host with **SGX capability**.
 ### 1. Clone Repositories
 Clone the following repositories to home directory:
 
-- **[securesystemslib](https://github.com/chinenyeokafor/diverify)**
+- **[diverify](https://github.com/chinenyeokafor/diverify)**
 - **[containerized_sigstore](https://github.com/chinenyeokafor/sigstore_containerized)**
 
 
 ### 2. SGX & Enclave Requirements
-`securesystemslib` and `fulcio` require enclaves for trusted signing and quote/QVL verification.  
+`diverify` and `fulcio` require enclaves for trusted signing and quote/QVL verification.  
 **SGX must be properly configured** in the container.  
 Either follow this GitHub Gist [link](https://gist.github.com/chinenyeokafor/af1401c38b177dd1a889f32d286964a6#file-intel_sgx_remote_attestation_setup-md) for setup or use a custom base image I've pre-configured for SGX, such as the one in my Docker Compose file.
 
 ---
 
 ### 3. Deploy Infrastructure
-- Deploy **Sigstore infra** and **securesystemslib** using the `docker-compose-deverify.yml` file in the `containerized_sigstore` directory.
-- Deploy **rstuf** using `docker-compose.yml` in the `rstuf` directory.
+- Deploy **Sigstore infra** and **diverify** using the `docker-compose-deverify.yml` file in the `containerized_sigstore` directory.
 
 ---
 
 ### 4. Start PCCS Services
-Inside the `securesystemslib` and `fulcio` containers, start the PCCS service:
+Inside the `diverify` and `fulcio` containers, start the PCCS service:
 
 ```bash
 cd /opt/intel/sgx-dcap-pccs/
@@ -49,14 +55,14 @@ node pccs_server.js &
 Inside the `fulcio` container, start fulcio service:
 
 ```bash
-cd /home/fulio-Div
+cd /home/fulcio-Div
 ./run.sh
 ```
 
 ---
 
 ### 6. Generate Local Root of Trust
-We use `securesystemslib` for the client and verifier.  
+We use `diverify` for the client and verifier.  
 To generate the local Sigstore infra root of trust, run:
 
 ```bash
@@ -66,13 +72,13 @@ python /diverify/util/generate_trusted_root.py
 ---
 
 ### 7. Start DiVerify Daemon and Run Tests
-**Inside the `securesystemslib` container:**
+**Inside the `diverify` container:**
 
 - **Terminal 1**: Follow ../src/diverify/TEE/SGX/README.md to start the DiVerify daemon
 
 - **Terminal 2**: Run the test scripts:
   ```bash
-  cd /home/securesystemslib
+  cd /home/diverify
   tests/run.sh
   ```
 
@@ -92,6 +98,11 @@ The previous step generates client and daemon logs for signing and verification 
 - Run this script to compute storage overhead:
   ```bash
   python tests/sig_overhead.py
+  ```
+
+- Run this script to generate LaTeX tables from the evaluation results:
+  ```bash
+  python tests/generate_latex_tables.py
   ```
 
 - Run this to compute integration effort:

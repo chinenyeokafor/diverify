@@ -26,6 +26,7 @@ This directory provides configuration and setup for running the DiVerify daemon 
 
 4b. Sign all the updated policies
     ```bash
+        cd /home/diverify/
         python sign_policy.py --version 2  --epoch 1
     ```
 
@@ -34,7 +35,7 @@ This directory provides configuration and setup for running the DiVerify daemon 
     cd /home/diverify/src/diverify/TEE/SGX
     python3 -m venv .venv
     source .venv/bin/activate
-    pip install -r requirement-daemon.txt
+    pip install -r requirements-daemon.txt
     pip install -e /home/diverify
     ```
 

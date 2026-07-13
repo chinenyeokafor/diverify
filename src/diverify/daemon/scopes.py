@@ -1,9 +1,8 @@
 import jwt
 import hashlib
+import functools
 import requests
-import time, json
-from base64 import b64decode
-from datetime import datetime
+import time
 from diverify.scope_providers.scope_provider_loader import load_scope_provider
 from diverify.util import perf_utils
 
@@ -22,7 +21,7 @@ def get_scopes(req_scopes):
             token = get_identity_token()
             claims = jwt.decode(token, options={"verify_signature": False})
             scopes[auth] = {
-                "sub": "https://github.com/" + claims.get('job_workflow_ref'),
+                "sub": str(claims.get('sub')),
                 "iss": claims.get('iss'),
                 "token_hash": hashlib.sha256(token.encode()).hexdigest()
                 }
@@ -41,14 +40,12 @@ def get_scopes(req_scopes):
             raise ValueError(f"Unknown authentication type: {auth}")
     return scopes, token
 
+@functools.cache
 def get_identity_token() -> str:
-    url = "https://raw.githubusercontent.com/sigstore-conformance/extremely-dangerous-public-oidc-beacon/current-token/oidc-token.txt"
-    while True:
-        token = requests.get(url).text.strip()
-        p = token.split(".")[1] + "=" * (-len(token.split(".")[1]) % 4)
-        if datetime.now().timestamp() + 5 < json.loads(b64decode(p))["exp"]:
-            return token
-        time.sleep(5)
+    url = "https://storage.googleapis.com/sigstore-conformance-testing-token/untrusted-testing-token.txt"
+    response = requests.get(url, timeout=30)
+    response.raise_for_status()
+    return response.text.strip()
 
 def validate_scopes(auth_result: dict) -> bool:
     # Client verifies only the validity of the oidc token. The rest are validated by the verifier
